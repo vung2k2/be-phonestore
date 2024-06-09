@@ -3,7 +3,7 @@ import "dotenv/config";
 
 export const generateAccessToken = (payload) => {
   const options = {
-    expiresIn: "15m",
+    expiresIn: "15y",
   };
   return jwt.sign(
     {

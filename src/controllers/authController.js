@@ -39,7 +39,7 @@ const login = async (req, res, next) => {
 
 const refreshToken = async (req, res, next) => {
   try {
-    const { refreshToken } = req.body;
+    const refreshToken = req.headers.refreshtoken;
     if (!refreshToken) {
       throw new ApiError(
         StatusCodes.BAD_REQUEST,
@@ -53,4 +53,39 @@ const refreshToken = async (req, res, next) => {
   }
 };
 
-export const authController = { register, login, refreshToken };
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const result = await authService.forgotPassword(email);
+    res.status(StatusCodes.OK).json(result);
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
+const rePassword = async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "Vui lòng điền đầy đủ thông tin"
+      );
+    } else {
+      const result = await authService.rePassword(token, newPassword);
+      res.status(StatusCodes.OK).json(result);
+      next();
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const authController = {
+  register,
+  login,
+  refreshToken,
+  forgotPassword,
+  rePassword,
+};

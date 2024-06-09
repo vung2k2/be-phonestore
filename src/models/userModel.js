@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    phoneNumber: {
+    phone: {
       type: String,
       trim: true,
       match: [/^\d{10,11}$/, "Please use a valid phone number."],

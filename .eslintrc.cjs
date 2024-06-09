@@ -24,5 +24,6 @@ module.exports = {
     "no-unused-vars": 1,
     "no-unexpected-multiline": "warn",
     "no-useless-escape": 0,
+    "no-prototype-builtins": 0,
   },
 };

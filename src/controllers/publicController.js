@@ -8,4 +8,15 @@ const allProducts = async (req, res, next) => {
     next(error);
   }
 };
-export const publicController = { allProducts };
+
+const getReviews = async (req, res, next) => {
+  try {
+    const productId = req.params.id;
+    const reviews = await publicService.getReviews(productId);
+    res.status(StatusCodes.OK).json(reviews);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const publicController = { allProducts, getReviews };
