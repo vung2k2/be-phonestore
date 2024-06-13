@@ -104,4 +104,95 @@ const importProductsFromExcel = async (filePath) => {
   }
 };
 
-export const adminService = { createProduct, importProductsFromExcel };
+const getProducts = async (query) => {
+  try {
+    const {
+      page = 1,
+      perPage = 10,
+      sort = "_id",
+      order = "ASC",
+      filter = "{}",
+    } = query;
+
+    const filterObj = JSON.parse(filter);
+    const sortObj = { [sort]: order === "ASC" ? 1 : -1 };
+
+    // Tạo bộ lọc dựa trên filterObj
+    const queryObj = {};
+    if (filterObj.q) {
+      queryObj.$or = [
+        { name: new RegExp(filterObj.q, "i") },
+        { category: new RegExp(filterObj.q, "i") },
+        // Thêm các trường khác cần tìm kiếm
+      ];
+    }
+
+    const products = await Product.find(queryObj)
+      .sort(sortObj)
+      .skip((page - 1) * perPage)
+      .limit(Number(perPage));
+
+    const total = await Product.countDocuments(queryObj);
+
+    return { products, total };
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getProductById = async (_id) => {
+  try {
+    const product = await Product.findById(_id);
+    return product;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const updateProduct = async (_id, productData) => {
+  try {
+    const updatedProduct = await Product.findByIdAndUpdate(_id, productData, {
+      new: true,
+    });
+    if (!updatedProduct) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy sản phẩm!");
+    }
+    return updatedProduct;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const deleteProduct = async (_id) => {
+  try {
+    const deletedProduct = await Product.findByIdAndDelete(_id);
+    if (!deletedProduct) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy sản phẩm!");
+    }
+    return deletedProduct;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const deleteProducts = async (ids) => {
+  try {
+    const result = await Product.deleteMany({ _id: { $in: ids } });
+    if (result.deletedCount === 0) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy sản phẩm!");
+    }
+    return ids;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const adminService = {
+  createProduct,
+  importProductsFromExcel,
+  getProducts,
+  getProductById,
+  updateProduct,
+  deleteProduct,
+  deleteProducts,
+};

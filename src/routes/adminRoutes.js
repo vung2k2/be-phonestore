@@ -5,10 +5,15 @@ import uploadExcelMiddleware from "../middlewares/uploadExcelMiddleware.js";
 
 const Router = express.Router();
 
-Router.route("/product")
-  .get()
-  .post(uploadCloud.single("image"), adminController.createProduct);
+Router.route("/products")
+  .get(adminController.getProducts)
+  .post(uploadCloud.single("image"), adminController.createProduct)
+  .delete(adminController.deleteProducts);
 
+Router.route("/products/:id")
+  .get(adminController.getProductById)
+  .put(adminController.updateProduct)
+  .delete(adminController.deleteProduct);
 Router.route("/import-products").post(
   uploadExcelMiddleware,
   adminController.importProductsFromExcel

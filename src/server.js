@@ -9,7 +9,11 @@ const app = express();
 const port = process.env.PORT || 1406;
 
 connectDB();
-app.use(cors());
+const corsOptions = {
+  exposedHeaders: ["x-total-count"], // Đảm bảo rằng 'x-total-count' được bao gồm trong các headers hiển thị
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(API);
 app.use(errorHandlingMiddleware);
