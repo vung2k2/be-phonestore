@@ -1,4 +1,5 @@
 import Product from "../models/productModel.js";
+import User from "../models/userModel.js";
 import slugify from "slugify";
 import ExcelJS from "exceljs";
 import ApiError from "../utils/ApiError.js";
@@ -187,6 +188,64 @@ const deleteProducts = async (ids) => {
   }
 };
 
+const getCustomers = async (query) => {
+  try {
+    const {
+      page = 1,
+      perPage = 10,
+      sort = "createdAt",
+      order = "ASC",
+      filter = "{}",
+    } = query;
+    const filterObj = JSON.parse(filter);
+    const sortObj = { [sort]: order === "ASC" ? 1 : -1 };
+    const queryObj = {};
+    if (filterObj.q) {
+      queryObj.$or = [
+        { name: new RegExp(filterObj.q, "i") },
+        { email: new RegExp(filterObj.q, "i") },
+        { phone: new RegExp(filterObj.q, "i") },
+        { address: new RegExp(filterObj.q, "i") },
+      ];
+    }
+
+    const customers = await User.find(queryObj)
+      .sort(sortObj)
+      .skip((page - 1) * perPage)
+      .limit(Number(perPage));
+
+    const total = await User.countDocuments(queryObj);
+
+    return { customers, total };
+  } catch (error) {
+    throw error;
+  }
+};
+
+const deleteCustomer = async (_id) => {
+  try {
+    const deletedCustomer = await User.findByIdAndDelete(_id);
+    if (!deletedCustomer) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy khách hàng!");
+    }
+    return deletedCustomer;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const deleteCustomers = async (ids) => {
+  try {
+    const result = await User.deleteMany({ _id: { $in: ids } });
+    if (result.deletedCount === 0) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy khách hàng!");
+    }
+    return ids;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const adminService = {
   createProduct,
   importProductsFromExcel,
@@ -195,4 +254,7 @@ export const adminService = {
   updateProduct,
   deleteProduct,
   deleteProducts,
+  getCustomers,
+  deleteCustomer,
+  deleteCustomers,
 };

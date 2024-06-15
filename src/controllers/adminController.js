@@ -156,6 +156,40 @@ const deleteProducts = async (req, res, next) => {
   }
 };
 
+const getCustomers = async (req, res, next) => {
+  try {
+    const { customers, total } = await adminService.getCustomers(req.query);
+    res.setHeader("x-total-count", total.toString());
+    res.status(StatusCodes.OK).json(customers);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteCustomer = async (req, res, next) => {
+  try {
+    const customer = await adminService.deleteCustomer(req.params.id);
+    if (!customer) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, "Xóa khách hàng thất bại!");
+    }
+    res.status(StatusCodes.OK).json(customer);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteCustomers = async (req, res, next) => {
+  try {
+    const customers = await adminService.deleteCustomers(req.body.ids);
+    if (!customers) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, "Xóa khách hàng thất bại!");
+    }
+    res.status(StatusCodes.OK).json(customers);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const adminController = {
   createProduct,
   importProductsFromExcel,
@@ -164,4 +198,7 @@ export const adminController = {
   updateProduct,
   deleteProduct,
   deleteProducts,
+  getCustomers,
+  deleteCustomer,
+  deleteCustomers,
 };

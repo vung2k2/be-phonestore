@@ -18,4 +18,10 @@ Router.route("/import-products").post(
   uploadExcelMiddleware,
   adminController.importProductsFromExcel
 );
+
+Router.route("/customers")
+  .get(adminController.getCustomers)
+  .delete(adminController.deleteCustomers);
+Router.route("/customers/:id").delete(adminController.deleteCustomer);
+
 export const adminRoutes = Router;
