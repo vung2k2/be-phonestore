@@ -190,6 +190,16 @@ const deleteCustomers = async (req, res, next) => {
   }
 };
 
+const getOrders = async (req, res, next) => {
+  try {
+    const { orders, total } = await adminService.getOrders(req.query);
+    res.setHeader("x-total-count", total.toString());
+    res.status(StatusCodes.OK).json(orders);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const adminController = {
   createProduct,
   importProductsFromExcel,
@@ -201,4 +211,5 @@ export const adminController = {
   getCustomers,
   deleteCustomer,
   deleteCustomers,
+  getOrders,
 };

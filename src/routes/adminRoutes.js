@@ -23,5 +23,6 @@ Router.route("/customers")
   .get(adminController.getCustomers)
   .delete(adminController.deleteCustomers);
 Router.route("/customers/:id").delete(adminController.deleteCustomer);
+Router.route("/orders").get(adminController.getOrders);
 
 export const adminRoutes = Router;

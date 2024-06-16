@@ -1,5 +1,6 @@
 import Product from "../models/productModel.js";
 import User from "../models/userModel.js";
+import Order from "../models/orderModel.js";
 import slugify from "slugify";
 import ExcelJS from "exceljs";
 import ApiError from "../utils/ApiError.js";
@@ -246,6 +247,66 @@ const deleteCustomers = async (ids) => {
   }
 };
 
+const getOrders = async (query) => {
+  try {
+    const {
+      page = 1,
+      perPage = 10,
+      sort = "createdAt",
+      order = "ASC",
+      filter = "{}",
+    } = query;
+    const filterObj = JSON.parse(filter);
+    const sortObj = { [sort]: order === "ASC" ? 1 : -1 };
+    const queryObj = {};
+    if (filterObj.status) {
+      queryObj.status = filterObj.status;
+    }
+    if (filterObj.q) {
+      queryObj.$or = [{ orderInfo: new RegExp(filterObj.q, "i") }];
+    }
+
+    const od = await Order.find(queryObj)
+      .sort(sortObj)
+      .skip((page - 1) * perPage)
+      .limit(Number(perPage));
+
+    const orderPromises = od.map(async (order) => {
+      const productDetails = await Promise.all(
+        order.products.map(async (product) => {
+          const productDetail = await Product.findById(product.productId);
+          if (!productDetail) return null;
+          return {
+            _id: productDetail._id,
+            name: productDetail.name,
+            slug: productDetail.slug,
+            imageUrl: productDetail.imageUrl,
+            newPrice: productDetail.newPrice,
+            oldPrice: productDetail.oldPrice,
+            quantity: product.quantity,
+          };
+        })
+      );
+      return {
+        _id: order._id,
+        total_amount: order.totalAmount,
+        order_date: order.createdAt,
+        provider: order.provider,
+        status: order.status,
+        orderInfo: order.orderInfo,
+        products: productDetails,
+      };
+    });
+
+    const total = await Order.countDocuments(queryObj);
+    const orders = await Promise.all(orderPromises);
+
+    return { orders, total };
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const adminService = {
   createProduct,
   importProductsFromExcel,
@@ -257,4 +318,5 @@ export const adminService = {
   getCustomers,
   deleteCustomer,
   deleteCustomers,
+  getOrders,
 };
