@@ -154,9 +154,41 @@ const rePassword = async (token, newPassword) => {
   }
 };
 
+const loginAdmin = async (email, password) => {
+  try {
+    const user = await User.findOne({ email });
+
+    if (
+      !user ||
+      !(await comparePassword(password, user.password)) ||
+      user.role === "user"
+    ) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, "Sai thông tin tài khoản!");
+    }
+    const accessToken = generateAccessToken({ _id: user._id, role: user.role });
+    const refreshToken = generateRefreshToken({
+      _id: user._id,
+      role: user.role,
+    });
+    user.refreshToken = refreshToken;
+    await user.save();
+    return {
+      email: user.email,
+      name: user.name,
+      phone: user.phone,
+      address: user.address,
+      accessToken,
+      refreshToken,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const authService = {
   register,
   login,
+  loginAdmin,
   refreshToken,
   forgotPassword,
   rePassword,

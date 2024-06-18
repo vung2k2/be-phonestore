@@ -4,7 +4,7 @@ import { uploadCloud } from "../config/cloudinary.js";
 import uploadExcelMiddleware from "../middlewares/uploadExcelMiddleware.js";
 
 const Router = express.Router();
-
+Router.route("/login").post(adminController.login);
 Router.route("/products")
   .get(adminController.getProducts)
   .post(uploadCloud.single("image"), adminController.createProduct)
@@ -24,5 +24,6 @@ Router.route("/customers")
   .delete(adminController.deleteCustomers);
 Router.route("/customers/:id").delete(adminController.deleteCustomer);
 Router.route("/orders").get(adminController.getOrders);
+Router.route("/orders/:id").put(adminController.updateOrder);
 
 export const adminRoutes = Router;

@@ -5,6 +5,39 @@ import slugify from "slugify";
 import ExcelJS from "exceljs";
 import ApiError from "../utils/ApiError.js";
 import { StatusCodes } from "http-status-codes";
+import { generateAccessToken, generateRefreshToken } from "../utils/token.js";
+import { hashPassword, comparePassword } from "../utils/password.js";
+
+const login = async (email, password) => {
+  try {
+    const user = await User.findOne({ email });
+
+    if (
+      !user ||
+      !(await comparePassword(password, user.password)) ||
+      user.role === "user"
+    ) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, "Sai thông tin tài khoản!");
+    }
+    const accessToken = generateAccessToken({ _id: user._id, role: user.role });
+    const refreshToken = generateRefreshToken({
+      _id: user._id,
+      role: user.role,
+    });
+    user.refreshToken = refreshToken;
+    await user.save();
+    return {
+      email: user.email,
+      name: user.name,
+      phone: user.phone,
+      address: user.address,
+      accessToken,
+      refreshToken,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
 
 const createProduct = async (
   name,
@@ -209,7 +242,7 @@ const getCustomers = async (query) => {
         { address: new RegExp(filterObj.q, "i") },
       ];
     }
-
+    queryObj.role = { $ne: "admin" };
     const customers = await User.find(queryObj)
       .sort(sortObj)
       .skip((page - 1) * perPage)
@@ -307,7 +340,22 @@ const getOrders = async (query) => {
   }
 };
 
+const updateOrder = async (_id, status) => {
+  try {
+    const updatedOrder = await Order.findByIdAndUpdate(_id, status, {
+      new: true,
+    });
+    if (!updatedOrder) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy đơn hàng!");
+    }
+    return updatedOrder;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const adminService = {
+  login,
   createProduct,
   importProductsFromExcel,
   getProducts,
@@ -319,4 +367,5 @@ export const adminService = {
   deleteCustomer,
   deleteCustomers,
   getOrders,
+  updateOrder,
 };

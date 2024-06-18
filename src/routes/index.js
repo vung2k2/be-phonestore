@@ -10,6 +10,6 @@ const Router = express.Router();
 Router.use("/public", publicRoutes);
 Router.use("/auth", authRoutes);
 Router.use("/user", jwtMiddleware("user"), userRoutes);
-Router.use("/admin", adminRoutes);
+Router.use("/admin", jwtMiddleware("admin"), adminRoutes);
 
 export const API = Router;

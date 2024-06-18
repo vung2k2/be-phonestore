@@ -82,9 +82,27 @@ const rePassword = async (req, res, next) => {
   }
 };
 
+const loginAdmin = async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password)
+      throw new ApiError(StatusCodes.BAD_REQUEST, "Thiếu thông tin đăng nhập!");
+    // if (!emailValidation(username))
+    //   throw new ApiError(
+    //     StatusCodes.BAD_REQUEST,
+    //     "Định dạng email không hợp lệ!"
+    //   );
+    const result = await authService.loginAdmin(username, password);
+    res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const authController = {
   register,
   login,
+  loginAdmin,
   refreshToken,
   forgotPassword,
   rePassword,

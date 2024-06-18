@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
 import "dotenv/config";
 
-export const generateAccessToken = (payload) => {
+export const generateAccessToken = (payload, expiresIn = "20m") => {
   const options = {
-    expiresIn: "15y",
+    expiresIn,
   };
   return jwt.sign(
     {
@@ -14,12 +14,15 @@ export const generateAccessToken = (payload) => {
   );
 };
 
-export const generateRefreshToken = (payload) => {
+export const generateRefreshToken = (payload, expiresIn = "1y") => {
+  const options = {
+    expiresIn,
+  };
   return jwt.sign(
     {
       payload,
     },
     process.env.JWT_REFRESH_KEY,
-    { expiresIn: "1y" }
+    options
   );
 };

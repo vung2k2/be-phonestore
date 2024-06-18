@@ -2,6 +2,25 @@ import { StatusCodes } from "http-status-codes";
 import { adminService } from "../services/adminService.js";
 import ApiError from "../utils/ApiError.js";
 import fs from "fs";
+import { emailValidation } from "../validations/emailValidation.js";
+
+const login = async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password)
+      throw new ApiError(StatusCodes.BAD_REQUEST, "Thiếu thông tin đăng nhập!");
+    // if (!emailValidation(username))
+    //   throw new ApiError(
+    //     StatusCodes.BAD_REQUEST,
+    //     "Định dạng email không hợp lệ!"
+    //   );
+    const result = await adminService.login(username, password);
+    res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 const createProduct = async (req, res, next) => {
   try {
     const imageUrl = req.file.path;
@@ -200,7 +219,23 @@ const getOrders = async (req, res, next) => {
   }
 };
 
+const updateOrder = async (req, res, next) => {
+  try {
+    const order = await adminService.updateOrder(req.params.id, req.body);
+    if (!order) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "Cập nhật đơn hàng thất bại!"
+      );
+    }
+    res.status(StatusCodes.OK).json(order);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const adminController = {
+  login,
   createProduct,
   importProductsFromExcel,
   getProducts,
@@ -212,4 +247,5 @@ export const adminController = {
   deleteCustomer,
   deleteCustomers,
   getOrders,
+  updateOrder,
 };
