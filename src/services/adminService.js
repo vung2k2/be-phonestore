@@ -286,7 +286,7 @@ const getOrders = async (query) => {
       page = 1,
       perPage = 10,
       sort = "createdAt",
-      order = "ASC",
+      order = "DESC",
       filter = "{}",
     } = query;
     const filterObj = JSON.parse(filter);
@@ -322,8 +322,8 @@ const getOrders = async (query) => {
       );
       return {
         _id: order._id,
-        total_amount: order.totalAmount,
-        order_date: order.createdAt,
+        totalAmount: order.totalAmount,
+        createdAt: order.createdAt,
         provider: order.provider,
         status: order.status,
         orderInfo: order.orderInfo,
@@ -354,6 +354,117 @@ const updateOrder = async (_id, status) => {
   }
 };
 
+const getTotalRevenue = async () => {
+  try {
+    const orders = await Order.find({ status: "completed" });
+    const totalRevenue = orders.reduce(
+      (total, order) => total + order.totalAmount,
+      0
+    );
+    return totalRevenue;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getRevenueLast30Days = async () => {
+  try {
+    const currentDate = new Date();
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    // Lấy các đơn hàng đã hoàn thành trong khoảng thời gian từ 30 ngày trước đến ngày hiện tại
+    const orders = await Order.find({
+      status: "completed",
+      createdAt: { $gte: thirtyDaysAgo, $lte: currentDate },
+    }).sort({ createdAt: 1 }); // Sắp xếp theo ngày tạo tăng dần để có thứ tự từ cũ đến mới
+
+    // Tạo mảng 30 giá trị doanh thu của các ngày gần nhất
+    const thirtyDayRevenue = [];
+    const currentDateWithoutTime = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      currentDate.getDate()
+    );
+
+    for (let i = 0; i < 30; i++) {
+      const date = new Date(currentDateWithoutTime);
+      date.setDate(currentDateWithoutTime.getDate() - i);
+
+      // Tính tổng doanh thu cho mỗi ngày
+      const dailyRevenue = orders.reduce((total, order) => {
+        const orderDate = new Date(order.createdAt);
+        if (
+          orderDate.getFullYear() === date.getFullYear() &&
+          orderDate.getMonth() === date.getMonth() &&
+          orderDate.getDate() === date.getDate()
+        ) {
+          return total + order.totalAmount;
+        }
+        return total;
+      }, 0);
+
+      // Làm tròn và định dạng số doanh thu, ví dụ: 52652000 => 52.65
+      const formattedRevenue = Math.round(dailyRevenue / 100000) / 10; // Chia cho 1 triệu và làm tròn 1 chữ số thập phân
+      thirtyDayRevenue.unshift(formattedRevenue); // Thêm vào đầu mảng để có thứ tự từ cũ đến mới
+    }
+
+    return thirtyDayRevenue;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getRevenueYearToDate = async () => {
+  try {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1; // Tháng hiện tại (từ 1 đến 12)
+
+    const startOfYear = new Date(currentYear, 0, 1); // Ngày đầu tiên của năm
+    const endOfCurrentMonth = new Date(
+      currentYear,
+      currentMonth,
+      0,
+      23,
+      59,
+      59,
+      999
+    ); // Ngày cuối cùng của tháng hiện tại
+
+    // Lấy các đơn hàng đã hoàn thành trong khoảng thời gian từ đầu năm đến cuối tháng hiện tại
+    const orders = await Order.find({
+      status: "completed",
+      createdAt: { $gte: startOfYear, $lte: endOfCurrentMonth },
+    }).sort({ createdAt: 1 });
+
+    // Tạo mảng doanh thu theo từng tháng từ đầu năm đến tháng hiện tại
+    const monthlyRevenue = Array(currentMonth).fill(0); // Mảng với số phần tử bằng số tháng từ đầu năm đến nay
+
+    orders.forEach((order) => {
+      const orderMonth = new Date(order.createdAt).getMonth(); // Lấy tháng của đơn hàng
+      monthlyRevenue[orderMonth] += order.totalAmount; // Cộng doanh thu vào tháng tương ứng
+    });
+
+    // Làm tròn và định dạng số doanh thu, ví dụ: 52652000 => 52.65
+    const formattedMonthlyRevenue = monthlyRevenue.map(
+      (revenue) => Math.round(revenue / 100000) / 10
+    ); // Chia cho 1 triệu và làm tròn 1 chữ số thập phân
+
+    return formattedMonthlyRevenue;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getTotalOrdersByStatus = async (status) => {
+  try {
+    const totalOrders = await Order.countDocuments({ status });
+    return totalOrders;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const adminService = {
   login,
   createProduct,
@@ -368,4 +479,8 @@ export const adminService = {
   deleteCustomers,
   getOrders,
   updateOrder,
+  getTotalRevenue,
+  getTotalOrdersByStatus,
+  getRevenueLast30Days,
+  getRevenueYearToDate,
 };

@@ -234,6 +234,44 @@ const updateOrder = async (req, res, next) => {
   }
 };
 
+const getTotalRevenue = async (req, res, next) => {
+  try {
+    const totalRevenue = await adminService.getTotalRevenue();
+    res.status(StatusCodes.OK).json(totalRevenue);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getTotalOrdersByStatus = async (req, res, next) => {
+  try {
+    const totalOrders = await adminService.getTotalOrdersByStatus(
+      req.query.status
+    );
+    res.status(StatusCodes.OK).json(totalOrders);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getRevenueLast30Days = async (req, res, next) => {
+  try {
+    const revenueLast30Days = await adminService.getRevenueLast30Days();
+    res.status(StatusCodes.OK).json(revenueLast30Days);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getRevenueYearToDate = async (req, res, next) => {
+  try {
+    const revenueYearToDate = await adminService.getRevenueYearToDate();
+    res.status(StatusCodes.OK).json(revenueYearToDate);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const adminController = {
   login,
   createProduct,
@@ -248,4 +286,8 @@ export const adminController = {
   deleteCustomers,
   getOrders,
   updateOrder,
+  getTotalRevenue,
+  getTotalOrdersByStatus,
+  getRevenueLast30Days,
+  getRevenueYearToDate,
 };
